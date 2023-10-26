@@ -3,3 +3,4 @@ target
 !/bin/.gitkeep
 /bootloader/rustsbi-qemu.bin
 .DS_Store
+/os/src/link_app.S

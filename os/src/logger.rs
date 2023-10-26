@@ -2,7 +2,21 @@ use log::{set_logger, set_max_level, Level, LevelFilter, Log, SetLoggerError};
 
 use crate::println;
 
-pub struct Logger;
+pub struct Logger {
+    pub module: Option<&'static str>,
+}
+
+impl Logger {
+    pub fn new() -> Logger {
+        Logger { module: None }
+    }
+
+    pub fn with_module(module: &'static str) -> Logger {
+        Logger {
+            module: Some(module),
+        }
+    }
+}
 
 impl Log for Logger {
     fn enabled(&self, _: &log::Metadata) -> bool {
@@ -18,12 +32,22 @@ impl Log for Logger {
             Level::Trace => 90,
         };
 
-        println!(
-            "\x1b[{}m[{}] {}\x1b[0m",
-            color,
-            record.level(),
-            record.args()
-        )
+        if let Some(name) = self.module {
+            println!(
+                "\x1b[{}m[{}] [{}] {}\x1b[0m",
+                color,
+                record.level(),
+                name,
+                record.args()
+            )
+        } else {
+            println!(
+                "\x1b[{}m[{}] {}\x1b[0m",
+                color,
+                record.level(),
+                record.args()
+            )
+        }
     }
 
     fn flush(&self) {}

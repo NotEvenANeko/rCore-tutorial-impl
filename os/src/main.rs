@@ -2,29 +2,35 @@
 #![no_std]
 #![no_main]
 
+mod batch;
 mod console;
 mod lang_items;
 mod logger;
 mod sbi;
+mod sync;
+mod syscall;
+mod trap;
 
 use core::{arch::global_asm, include_str};
 
-use log::{debug, error, info, trace, warn};
+use lazy_static::lazy_static;
+use log::info;
+use shared::clear_bss;
 
-use crate::{
-    logger::{init_logger, Logger},
-    sbi::legacy::shutdown,
-};
+use crate::logger::{init_logger, Logger};
 
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
-static GLOBAL_LOGGER: Logger = Logger;
+lazy_static! {
+    static ref GLOBAL_LOGGER: Logger = Logger::with_module("kernel");
+}
 
 #[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
 
-    init_logger(&GLOBAL_LOGGER).unwrap();
+    init_logger(&*GLOBAL_LOGGER).unwrap();
 
     extern "C" {
         fn stext();
@@ -42,22 +48,8 @@ pub fn rust_main() -> ! {
     info!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
     info!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
 
-    trace!("Trace");
-    debug!("Debug");
-    info!("Info");
-    warn!("Warn");
-    error!("Error");
+    trap::init();
+    batch::init();
 
-    shutdown(None);
-}
-
-fn clear_bss() {
-    extern "C" {
-        fn sbss();
-        fn ebss();
-    }
-
-    unsafe {
-        (sbss as *mut u8).write_bytes(0, ebss as usize - sbss as usize);
-    }
+    batch::run_next_app()
 }

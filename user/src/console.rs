@@ -1,15 +1,13 @@
 use core::fmt::{Arguments, Error, Result, Write};
 
-use crate::sbi;
+use shared::syscall::fd::STDOUT;
+
+use crate::syscall::write;
 
 struct Stdout;
-
 impl Write for Stdout {
     fn write_str(&mut self, s: &str) -> Result {
-        for ch in s.chars() {
-            sbi::legacy::console_putchar(ch).map_err(|_| Error)?
-        }
-
+        write(STDOUT, s.as_bytes()).map_err(|_| Error)?;
         Ok(())
     }
 }
@@ -20,8 +18,8 @@ pub fn print(args: Arguments) -> () {
 
 #[macro_export]
 macro_rules! print {
-    ($fmt:literal $(, $($arg:tt)+)?) => {{
-        $crate::console::print(format_args!($fmt$(, $($arg)+)?));
+    ($(, $($arg:tt)+)?) => {{
+        $crate::console::print(format_args!($(, $($arg)+)?));
     }};
 }
 
