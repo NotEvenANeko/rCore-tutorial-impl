@@ -13,12 +13,23 @@ pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> isize {
 mod call {
     use core::slice;
 
-    use log::{error, info};
+    use log::{debug, error, info};
     use shared::syscall;
 
-    use crate::{batch::run_next_app, print};
+    use crate::{
+        batch::{run_next_app, APP_BASE_ADDRESS, APP_SIZE_LIMIT, USER_STACK},
+        print,
+    };
 
     pub fn write(fd: usize, buf: *const u8, len: usize) -> isize {
+        if !((APP_BASE_ADDRESS <= buf as usize
+            && unsafe { buf.add(len) as usize } < APP_BASE_ADDRESS + APP_SIZE_LIMIT)
+            || (USER_STACK.contains(buf as usize) && USER_STACK.contains(buf as usize + len)))
+        {
+            debug!("try to access forbidden memory {:#x}", buf as usize);
+            return -1;
+        }
+
         match fd {
             syscall::fd::STDOUT => {
                 let slice = unsafe { slice::from_raw_parts(buf, len) };

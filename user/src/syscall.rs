@@ -2,8 +2,6 @@ use core::arch::asm;
 
 use shared::syscall::call_id;
 
-use crate::println;
-
 pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> isize {
     let mut ret;
 
@@ -20,6 +18,7 @@ pub fn syscall(id: usize, arg0: usize, arg1: usize, arg2: usize) -> isize {
     ret
 }
 
+#[derive(Debug)]
 pub struct SyscallError;
 
 pub type SyscallResult<T> = Result<T, SyscallError>;

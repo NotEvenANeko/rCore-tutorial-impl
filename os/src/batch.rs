@@ -6,11 +6,11 @@ use log::{debug, info, warn};
 use crate::{sbi::legacy::shutdown, sync::up::UPSafeCell, trap::context::TrapContext};
 
 const MAX_APP_COUNT: usize = 10;
-const APP_BASE_ADDRESS: usize = 0x80400000;
-const APP_SIZE_LIMIT: usize = 0x20000;
+pub const APP_BASE_ADDRESS: usize = 0x80400000;
+pub const APP_SIZE_LIMIT: usize = 0x20000;
 
-const USER_STACK_SIZE: usize = 2 * 4096;
-const KERNEL_STACK_SIZE: usize = 2 * 4096;
+const USER_STACK_SIZE: usize = 4096;
+const KERNEL_STACK_SIZE: usize = 4096;
 
 #[repr(align(4096))]
 struct KernelStack([u8; KERNEL_STACK_SIZE]);
@@ -33,15 +33,19 @@ impl KernelStack {
 static KERNEL_STACK: KernelStack = KernelStack([0; KERNEL_STACK_SIZE]);
 
 #[repr(align(4096))]
-struct UserStack([u8; USER_STACK_SIZE]);
+pub struct UserStack([u8; USER_STACK_SIZE]);
 
 impl UserStack {
     pub fn get_sp(&self) -> usize {
         self.0.as_ptr() as usize + USER_STACK_SIZE
     }
+
+    pub fn contains(&self, pointer: usize) -> bool {
+        (self.0.as_ptr() as usize) < pointer && pointer <= self.get_sp()
+    }
 }
 
-static USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
+pub static USER_STACK: UserStack = UserStack([0; USER_STACK_SIZE]);
 
 pub struct AppManager {
     current_app: usize,

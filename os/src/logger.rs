@@ -61,6 +61,6 @@ pub fn init_logger(logger: &'static dyn Log) -> Result<(), SetLoggerError> {
         Some("INFO") => set_max_level(LevelFilter::Info),
         Some("DEBUG") => set_max_level(LevelFilter::Debug),
         Some("TRACE") => set_max_level(LevelFilter::Trace),
-        _ => set_max_level(LevelFilter::Info),
+        _ => set_max_level(LevelFilter::Off),
     })
 }
